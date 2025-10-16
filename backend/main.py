@@ -49,5 +49,6 @@ def index():
     return "Welcome to the Flask API!"
 
 if __name__ == '__main__':
+    # Get port safely with a default, and bind to all interfaces in Docker
     port = int(os.getenv("FLASK_PORT", "3000"))
-    app.run(debug=True, host="0.0.0.0", port=port)
+    app.run(debug=True, host='0.0.0.0', port=port)
