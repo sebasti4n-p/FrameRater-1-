@@ -48,6 +48,47 @@ def get_data():
 def index():
     return "Welcome to the Flask API!"
 
+@app.route("/api/movies/<int:movie_id>", methods=["GET"])
+def movie_detail(movie_id: int):
+    # one query for movie + rating aggregate via the view, and one for genres
+    with get_db_conn() as con, con.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute("""
+            SELECT m.id, m.title, m.release_date, m.tmdb_id,
+                   COALESCE(a.rating_count, 0) AS rating_count,
+                   ROUND(COALESCE(a.rating_avg, 0)::numeric, 1) AS rating_avg
+            FROM movie m
+            LEFT JOIN movie_rating_agg a ON a.movie_id = m.id
+            WHERE m.id = %s
+        """, (movie_id,))
+        movie = cur.fetchone()
+        if not movie:
+            return jsonify({"error": "not found"}), 404
+
+        cur.execute("""
+            SELECT g.name
+            FROM movie_genre mg
+            JOIN genre g ON g.id = mg.genre_id
+            WHERE mg.movie_id = %s
+            ORDER BY g.name
+        """, (movie_id,))
+        genres = [row["name"] for row in cur.fetchall()]
+    movie["genres"] = genres
+    return jsonify(movie)
+
+@app.route("/api/movies/<int:movie_id>/reviews", methods=["GET"])
+def movie_reviews(movie_id: int):
+    with get_db_conn() as con, con.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute("""
+            SELECT r.id, r.body, r.created_at, u.display_name, u.uid
+            FROM movie_review r
+            JOIN app_user u ON u.uid = r.uid
+            WHERE r.movie_id = %s
+            ORDER BY r.created_at DESC
+            LIMIT 50
+        """, (movie_id,))
+        rows = cur.fetchall()
+    return jsonify(rows)
+
 if __name__ == '__main__':
     # Get port safely with a default, and bind to all interfaces in Docker
     port = int(os.getenv("FLASK_PORT", "3000"))
