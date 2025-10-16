@@ -74,7 +74,7 @@ CREATE TABLE movie_rating (
 CREATE TABLE tv_rating (
   uid TEXT NOT NULL REFERENCES app_user(uid) ON DELETE CASCADE,
   tv_id INT NOT NULL REFERENCES tv_show(id) ON DELETE CASCADE,
-  rating_val NUMERIC(2,1) NOT NULL,
+  rating_val NUMERIC(3,1) NOT NULL,
   rated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (uid, tv_id),
   CHECK (rating_val >= 0 AND rating_val <= 10)
