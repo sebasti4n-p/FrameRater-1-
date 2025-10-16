@@ -49,4 +49,5 @@ def index():
     return "Welcome to the Flask API!"
 
 if __name__ == '__main__':
-    app.run(debug=True, port=int(os.getenv("FLASK_PORT", port=3000)))
+    port = int(os.getenv("FLASK_PORT", "3000"))
+    app.run(debug=True, host="0.0.0.0", port=port)
